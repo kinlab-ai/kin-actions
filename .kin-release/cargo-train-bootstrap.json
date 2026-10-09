@@ -54,7 +54,7 @@
   "release_b": "next kin-actions release after every Release A caller is live and the eight exact future caller paths are added to consumers.json",
   "callers": [
     {
-      "repository": "firelock-ai/kin-blobs",
+      "repository": "kinlab-ai/kin-blobs",
       "package": "kin-blobs",
       "manifest": "Cargo.toml",
       "version_authority": "package",
@@ -77,7 +77,7 @@
       "dependency_wave": null
     },
     {
-      "repository": "firelock-ai/kin-search",
+      "repository": "kinlab-ai/kin-search",
       "package": "kin-search",
       "manifest": "Cargo.toml",
       "version_authority": "package",
@@ -100,7 +100,7 @@
       "dependency_wave": null
     },
     {
-      "repository": "firelock-ai/kin-vector",
+      "repository": "kinlab-ai/kin-vector",
       "package": "kin-vector",
       "manifest": "Cargo.toml",
       "version_authority": "package",
@@ -123,7 +123,7 @@
       "dependency_wave": null
     },
     {
-      "repository": "firelock-ai/kin-infer",
+      "repository": "kinlab-ai/kin-infer",
       "package": "kin-infer",
       "manifest": "Cargo.toml",
       "version_authority": "package",
@@ -146,7 +146,7 @@
       "dependency_wave": null
     },
     {
-      "repository": "firelock-ai/kin-model",
+      "repository": "kinlab-ai/kin-model",
       "package": "kin-model",
       "manifest": "Cargo.toml",
       "version_authority": "package",
@@ -175,7 +175,7 @@
       }
     },
     {
-      "repository": "firelock-ai/kin-db",
+      "repository": "kinlab-ai/kin-db",
       "package": "kin-db",
       "manifest": "Cargo.toml",
       "version_authority": "workspace.package",
@@ -204,7 +204,7 @@
       }
     },
     {
-      "repository": "firelock-ai/kin-lsp",
+      "repository": "kinlab-ai/kin-lsp",
       "package": "kin-lsp",
       "manifest": "Cargo.toml",
       "version_authority": "package",
@@ -233,7 +233,7 @@
       }
     },
     {
-      "repository": "firelock-ai/kin-vfs",
+      "repository": "kinlab-ai/kin-vfs",
       "package": "kin-vfs-core",
       "manifest": "Cargo.toml",
       "version_authority": "workspace.package",

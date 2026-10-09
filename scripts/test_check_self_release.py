@@ -35,8 +35,8 @@ class SelfReleaseAuthorityTests(unittest.TestCase):
             "ref_type": "branch",
             "ref_name": "feature",
             "default_branch": "main",
-            "base_repo": "firelock-ai/kin-actions",
-            "head_repo": "firelock-ai/kin-actions",
+            "base_repo": "kinlab-ai/kin-actions",
+            "head_repo": "kinlab-ai/kin-actions",
             "head_branch": "feature",
             "labels": [],
             "remote_tag_sha": None,
@@ -150,7 +150,7 @@ class SelfReleaseAuthorityTests(unittest.TestCase):
                 ("CONTRIBUTING.md", "0.1.22"),
             ):
                 (root / name).write_text(
-                    "uses: firelock-ai/kin-actions/.github/workflows/"
+                    "uses: kinlab-ai/kin-actions/.github/workflows/"
                     f"x.yml@v{version}\n",
                     encoding="utf-8",
                 )
@@ -248,7 +248,7 @@ class MergeQueueValidationTests(unittest.TestCase):
                 "--ref-type", "branch",
                 "--ref-name", self.QUEUE_REF,
                 "--default-branch", "main",
-                "--base-repo", "firelock-ai/kin-actions",
+                "--base-repo", "kinlab-ai/kin-actions",
             ]
         )
         self.assertEqual(code, 0, printed)
@@ -263,7 +263,7 @@ class MergeQueueValidationTests(unittest.TestCase):
                 "--ref-type", "branch",
                 "--ref-name", "gh-readonly-queue/main/pr-20-deadbeef",
                 "--default-branch", "main",
-                "--base-repo", "firelock-ai/kin-actions",
+                "--base-repo", "kinlab-ai/kin-actions",
             ]
         )
         self.assertEqual(code, 1)
@@ -276,7 +276,7 @@ class MergeQueueValidationTests(unittest.TestCase):
                 "--ref-type", "branch",
                 "--ref-name", self.QUEUE_REF,
                 "--default-branch", "main",
-                "--base-repo", "firelock-ai/kin-actions",
+                "--base-repo", "kinlab-ai/kin-actions",
             ],
             version="not-a-version\n",
         )
@@ -290,7 +290,7 @@ class MergeQueueValidationTests(unittest.TestCase):
                 "--ref-name", "main",
                 "--push-before", "",
                 "--default-branch", "main",
-                "--base-repo", "firelock-ai/kin-actions",
+                "--base-repo", "kinlab-ai/kin-actions",
             ]
         )
         self.assertEqual(code, 1)

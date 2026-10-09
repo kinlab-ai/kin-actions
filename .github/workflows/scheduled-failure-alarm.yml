@@ -25,7 +25,7 @@ name: Scheduled Failure Alarm
 #     issues: write
 #   jobs:
 #     alarm:
-#       uses: firelock-ai/kin-actions/.github/workflows/scheduled-failure-alarm.yml@<ref>
+#       uses: kinlab-ai/kin-actions/.github/workflows/scheduled-failure-alarm.yml@<ref>
 #
 # Both permissions are required in the caller, not just `issues: write`.
 # Declaring a `permissions:` block sets every scope not listed to `none`, and a

@@ -32,8 +32,8 @@ class TrainPolicyTests(unittest.TestCase):
             "ref_type": "branch",
             "ref_name": "feature",
             "default_branch": "main",
-            "base_repo": "firelock-ai/kin-demo",
-            "head_repo": "firelock-ai/kin-demo",
+            "base_repo": "kinlab-ai/kin-demo",
+            "head_repo": "kinlab-ai/kin-demo",
             "head_branch": "feature",
             "train_branch": "automation/release-next",
         }

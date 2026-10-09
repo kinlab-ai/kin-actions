@@ -577,7 +577,7 @@ BLOCKED_INLINE_REQUIREMENT = (
     "candidate versions found which didn't match: 0.7.9\n"
     "location searched: `kin` index\n"
     "required by package `kin-context v0.5.23 "
-    "(https://github.com/firelock-ai/kin.git"
+    "(https://github.com/kinlab-ai/kin.git"
     "?rev=9ccb6182ee53da00dbf1d76a330d682b7f9be5d2#9ccb6182)`\n"
     "    ... which satisfies git dependency `kin-context` (locked to 0.5.23) "
     "of package `kin-bench-engine v0.1.0 "
@@ -590,7 +590,7 @@ BLOCKED_INLINE_REQUIREMENT = (
 BLOCKED_DEFERRED_REQUIREMENT = (
     "error: failed to select a version for `kin-db`.\n"
     "    ... required by package `kin-context v0.5.23 "
-    "(https://github.com/firelock-ai/kin.git"
+    "(https://github.com/kinlab-ai/kin.git"
     "?rev=9ccb6182ee53da00dbf1d76a330d682b7f9be5d2#9ccb6182)`\n"
     "    ... which satisfies git dependency `kin-context` (locked to 0.5.23) "
     "of package `kin-bench-cli v0.1.0 (/tmp/kin-bench/crates/kin-bench-cli)`\n"
@@ -1194,7 +1194,7 @@ class WorkflowContract(unittest.TestCase):
         function = self.run_update_function()
         reason = (
             "cannot roll kin-model to 0.7.9: package kin-context v0.5.23 "
-            "(https://github.com/firelock-ai/kin.git?rev=9ccb6182) requires "
+            "(https://github.com/kinlab-ai/kin.git?rev=9ccb6182) requires "
             "kin-model =0.7.8; manifests and Cargo.lock restored"
         )
 

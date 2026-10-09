@@ -211,7 +211,7 @@ printf '%s\\n' "$FAKE_NOW_EPOCH"
                 "KIN_RECOVERY_SUMMARY": str(self.summary),
                 "KIN_RECOVERY_DEADLINE_EPOCH": str(deadline),
                 "GITHUB_OUTPUT": str(self.output),
-                "GITHUB_REPOSITORY": "firelock-ai/kin-demo",
+                "GITHUB_REPOSITORY": "kinlab-ai/kin-demo",
                 "GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH": "main",
                 "FAKE_REGISTRY_STATE": registry_state,
                 "FAKE_REGISTRY_STATE_FILE": str(

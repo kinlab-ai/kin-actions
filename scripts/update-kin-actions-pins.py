@@ -18,13 +18,13 @@ SEMVER_RE = re.compile(
 )
 PIN_RE = re.compile(
     r"(?P<prefix>uses:\s*"
-    r"firelock-ai/kin-actions/\.github/workflows/"
+    r"(?:kinlab-ai|firelock-ai)/kin-actions/\.github/workflows/"
     r"[A-Za-z0-9_.-]+\.ya?ml@v)"
     r"(?P<version>(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\."
     r"(?:0|[1-9][0-9]*))"
 )
 KIN_ACTIONS_USE_RE = re.compile(
-    r"^firelock-ai/kin-actions/\.github/workflows/"
+    r"^(?:kinlab-ai|firelock-ai)/kin-actions/\.github/workflows/"
     r"[A-Za-z0-9_.-]+\.ya?ml@(?P<ref>.+)$"
 )
 STABLE_TAG_RE = re.compile(

@@ -13,7 +13,7 @@ name: Workflow Run Lookup Guard
 # Consume from another repo:
 #   jobs:
 #     workflow-run-lookup-guard:
-#       uses: firelock-ai/kin-actions/.github/workflows/workflow-run-lookup-guard.yml@v0.1.22
+#       uses: kinlab-ai/kin-actions/.github/workflows/workflow-run-lookup-guard.yml@v0.1.22
 #       with:
 #         allowlist: .github/workflow-run-lookup-allowlist.json
 #

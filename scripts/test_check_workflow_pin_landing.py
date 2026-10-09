@@ -31,7 +31,7 @@ class WorkflowPinLandingTests(unittest.TestCase):
             "head": {
                 "sha": "c" * 40,
                 "ref": "automation/kin-actions-pin-next",
-                "repo": {"full_name": "firelock-ai/kin-blobs"},
+                "repo": {"full_name": "kinlab-ai/kin-blobs"},
             },
             "base": {"ref": "main"},
         }
@@ -62,7 +62,7 @@ class WorkflowPinLandingTests(unittest.TestCase):
 
     def settings(self) -> dict:
         return {
-            "full_name": "firelock-ai/kin-blobs",
+            "full_name": "kinlab-ai/kin-blobs",
             "default_branch": "main",
             **landing.protection_guard.EXPECTED_SETTINGS,
         }
@@ -81,15 +81,15 @@ class WorkflowPinLandingTests(unittest.TestCase):
         values = {
             "pulls": [self.pull()],
             "compare": self.compare(),
-            "repository": "firelock-ai/kin-blobs",
+            "repository": "kinlab-ai/kin-blobs",
             "base": "main",
             "head_branch": "automation/kin-actions-pin-next",
             "target_version": "0.1.34",
             "landed_files": {
                 ".github/workflows/registry-publish.yml": (
-                    b"    uses: firelock-ai/kin-actions/.github/workflows/"
+                    b"    uses: kinlab-ai/kin-actions/.github/workflows/"
                     b"cargo-registry-release.yml@v0.1.33\n",
-                    b"    uses: firelock-ai/kin-actions/.github/workflows/"
+                    b"    uses: kinlab-ai/kin-actions/.github/workflows/"
                     b"cargo-registry-release.yml@v0.1.34\n",
                 )
             },
@@ -157,12 +157,12 @@ class WorkflowPinLandingTests(unittest.TestCase):
 
     def test_full_landed_blob_rejects_changes_hidden_by_a_truncated_rest_patch(self) -> None:
         before = (
-            b"    uses: firelock-ai/kin-actions/.github/workflows/"
+            b"    uses: kinlab-ai/kin-actions/.github/workflows/"
             b"cargo-registry-release.yml@v0.1.33\n"
             b"    timeout-minutes: 10\n"
         )
         after = (
-            b"    uses: firelock-ai/kin-actions/.github/workflows/"
+            b"    uses: kinlab-ai/kin-actions/.github/workflows/"
             b"cargo-registry-release.yml@v0.1.34\n"
             b"    timeout-minutes: 1\n"
         )
@@ -174,7 +174,7 @@ class WorkflowPinLandingTests(unittest.TestCase):
             )
 
     def test_cross_file_pin_swap_cannot_balance_global_counters(self) -> None:
-        prefix = b"    uses: firelock-ai/kin-actions/.github/workflows/"
+        prefix = b"    uses: kinlab-ai/kin-actions/.github/workflows/"
         with self.assertRaisesRegex(landing.LandingError, "beyond canonical pins"):
             self.evaluate(
                 landed_files={
@@ -190,7 +190,7 @@ class WorkflowPinLandingTests(unittest.TestCase):
             )
 
     def test_newer_removed_version_cannot_prove_a_rollout(self) -> None:
-        prefix = b"    uses: firelock-ai/kin-actions/.github/workflows/"
+        prefix = b"    uses: kinlab-ai/kin-actions/.github/workflows/"
         with self.assertRaisesRegex(landing.LandingError, "older stable version"):
             self.evaluate(
                 landed_files={
@@ -216,7 +216,7 @@ class WorkflowPinLandingTests(unittest.TestCase):
             path = root / ".github/workflows/registry-publish.yml"
             path.parent.mkdir(parents=True)
             before = (
-                "    uses: firelock-ai/kin-actions/.github/workflows/"
+                "    uses: kinlab-ai/kin-actions/.github/workflows/"
                 "cargo-registry-release.yml@v0.1.33\n"
             )
             after = before.replace("0.1.33", "0.1.34")

@@ -15,7 +15,7 @@ class ActivationError(RuntimeError):
 
 
 EXPECTED_RULESET_ID = 19932834
-EXPECTED_SOURCE = "firelock-ai/kin-actions"
+EXPECTED_SOURCE = "kinlab-ai/kin-actions"
 EXPECTED_RULE_TYPES = Counter(("update", "deletion", "non_fast_forward"))
 
 

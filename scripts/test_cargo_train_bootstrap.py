@@ -49,14 +49,14 @@ class CargoTrainBootstrapTests(unittest.TestCase):
             },
         )
         expected = {
-            "firelock-ai/kin-blobs": ("kin-blobs", "package"),
-            "firelock-ai/kin-search": ("kin-search", "package"),
-            "firelock-ai/kin-vector": ("kin-vector", "package"),
-            "firelock-ai/kin-infer": ("kin-infer", "package"),
-            "firelock-ai/kin-model": ("kin-model", "package"),
-            "firelock-ai/kin-db": ("kin-db", "workspace.package"),
-            "firelock-ai/kin-lsp": ("kin-lsp", "package"),
-            "firelock-ai/kin-vfs": ("kin-vfs-core", "workspace.package"),
+            "kinlab-ai/kin-blobs": ("kin-blobs", "package"),
+            "kinlab-ai/kin-search": ("kin-search", "package"),
+            "kinlab-ai/kin-vector": ("kin-vector", "package"),
+            "kinlab-ai/kin-infer": ("kin-infer", "package"),
+            "kinlab-ai/kin-model": ("kin-model", "package"),
+            "kinlab-ai/kin-db": ("kin-db", "workspace.package"),
+            "kinlab-ai/kin-lsp": ("kin-lsp", "package"),
+            "kinlab-ai/kin-vfs": ("kin-vfs-core", "workspace.package"),
         }
         self.assertEqual(
             {
@@ -98,10 +98,10 @@ class CargoTrainBootstrapTests(unittest.TestCase):
         self.assertEqual(
             set(configured),
             {
-                "firelock-ai/kin-model",
-                "firelock-ai/kin-db",
-                "firelock-ai/kin-lsp",
-                "firelock-ai/kin-vfs",
+                "kinlab-ai/kin-model",
+                "kinlab-ai/kin-db",
+                "kinlab-ai/kin-lsp",
+                "kinlab-ai/kin-vfs",
             },
         )
         for contract in configured.values():

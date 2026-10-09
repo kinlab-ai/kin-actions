@@ -26,17 +26,17 @@ TOP_LEVEL_KEYS = {"schema", "protocol", "rollout", "repositories"}
 STAGE_KEYS = {"id", "repositories"}
 REPOSITORY_KEYS = {"kind", "workflow_paths"}
 CARGO_REPOSITORIES = {
-    "firelock-ai/kin-blobs",
-    "firelock-ai/kin-search",
-    "firelock-ai/kin-vector",
-    "firelock-ai/kin-infer",
-    "firelock-ai/kin-model",
-    "firelock-ai/kin-db",
-    "firelock-ai/kin-vfs",
-    "firelock-ai/kin-lsp",
+    "kinlab-ai/kin-blobs",
+    "kinlab-ai/kin-search",
+    "kinlab-ai/kin-vector",
+    "kinlab-ai/kin-infer",
+    "kinlab-ai/kin-model",
+    "kinlab-ai/kin-db",
+    "kinlab-ai/kin-vfs",
+    "kinlab-ai/kin-lsp",
 }
 EXPECTED_REPOSITORIES = {
-    "firelock-ai/kin": {
+    "kinlab-ai/kin": {
         "kind": "other",
         "workflow_paths": [
             ".github/workflows/approve-to-merge.yml",
@@ -44,7 +44,7 @@ EXPECTED_REPOSITORIES = {
             ".github/workflows/notify-approver.yml",
         ],
     },
-    "firelock-ai/kin-bench": {
+    "kinlab-ai/kin-bench": {
         "kind": "other",
         "workflow_paths": [
             ".github/workflows/approve-to-merge.yml",
@@ -53,7 +53,7 @@ EXPECTED_REPOSITORIES = {
             ".github/workflows/notify-approver.yml",
         ],
     },
-    "firelock-ai/kinlab": {
+    "kinlab-ai/kinlab": {
         "kind": "other",
         "workflow_paths": [
             ".github/workflows/ci.yml",
@@ -61,35 +61,35 @@ EXPECTED_REPOSITORIES = {
             ".github/workflows/notify-approver.yml",
         ],
     },
-    "firelock-ai/kin-blobs": {
+    "kinlab-ai/kin-blobs": {
         "kind": "cargo_release",
         "workflow_paths": [
             ".github/workflows/registry-publish.yml",
             ".github/workflows/scheduled-failure-alarm.yml",
         ],
     },
-    "firelock-ai/kin-search": {
+    "kinlab-ai/kin-search": {
         "kind": "cargo_release",
         "workflow_paths": [
             ".github/workflows/merge-queue-ejection-notice.yml",
             ".github/workflows/registry-publish.yml",
         ],
     },
-    "firelock-ai/kin-vector": {
+    "kinlab-ai/kin-vector": {
         "kind": "cargo_release",
         "workflow_paths": [
             ".github/workflows/registry-publish.yml",
             ".github/workflows/scheduled-failure-alarm.yml",
         ],
     },
-    "firelock-ai/kin-infer": {
+    "kinlab-ai/kin-infer": {
         "kind": "cargo_release",
         "workflow_paths": [
             ".github/workflows/merge-queue-ejection-notice.yml",
             ".github/workflows/registry-publish.yml",
         ],
     },
-    "firelock-ai/kin-model": {
+    "kinlab-ai/kin-model": {
         "kind": "cargo_release",
         "workflow_paths": [
             ".github/workflows/kin-dependency-wave.yml",
@@ -98,7 +98,7 @@ EXPECTED_REPOSITORIES = {
             ".github/workflows/release-recovery.yml",
         ],
     },
-    "firelock-ai/kin-db": {
+    "kinlab-ai/kin-db": {
         "kind": "cargo_release",
         "workflow_paths": [
             ".github/workflows/kin-dependency-wave.yml",
@@ -106,7 +106,7 @@ EXPECTED_REPOSITORIES = {
             ".github/workflows/scheduled-failure-alarm.yml",
         ],
     },
-    "firelock-ai/kin-vfs": {
+    "kinlab-ai/kin-vfs": {
         "kind": "cargo_release",
         "workflow_paths": [
             ".github/workflows/kin-dependency-wave.yml",
@@ -114,7 +114,7 @@ EXPECTED_REPOSITORIES = {
             ".github/workflows/registry-publish.yml",
         ],
     },
-    "firelock-ai/kin-lsp": {
+    "kinlab-ai/kin-lsp": {
         "kind": "cargo_release",
         "workflow_paths": [
             ".github/workflows/kin-dependency-wave.yml",
@@ -122,49 +122,49 @@ EXPECTED_REPOSITORIES = {
             ".github/workflows/registry-publish.yml",
         ],
     },
-    "firelock-ai/kin-bench-spec": {
+    "kinlab-ai/kin-bench-spec": {
         "kind": "other",
         "workflow_paths": [".github/workflows/merge-queue-ejection-notice.yml"],
     },
-    "firelock-ai/kin-editor": {
+    "kinlab-ai/kin-editor": {
         "kind": "other",
         "workflow_paths": [".github/workflows/merge-queue-ejection-notice.yml"],
     },
-    "firelock-ai/kin-infra": {
+    "kinlab-ai/kin-infra": {
         "kind": "other",
         "workflow_paths": [".github/workflows/ci.yml"],
     },
-    "firelock-ai/homebrew-kin": {
+    "kinlab-ai/homebrew-kin": {
         "kind": "other",
         "workflow_paths": [".github/workflows/ci.yml"],
     },
 }
 EXPECTED_ROLLOUT = [
-    {"id": "pilot", "repositories": ["firelock-ai/kin-blobs"]},
+    {"id": "pilot", "repositories": ["kinlab-ai/kin-blobs"]},
     {
         "id": "primitives",
         "repositories": [
-            "firelock-ai/kin-search",
-            "firelock-ai/kin-vector",
-            "firelock-ai/kin-infer",
+            "kinlab-ai/kin-search",
+            "kinlab-ai/kin-vector",
+            "kinlab-ai/kin-infer",
         ],
     },
-    {"id": "model", "repositories": ["firelock-ai/kin-model"]},
-    {"id": "database", "repositories": ["firelock-ai/kin-db"]},
+    {"id": "model", "repositories": ["kinlab-ai/kin-model"]},
+    {"id": "database", "repositories": ["kinlab-ai/kin-db"]},
     {
         "id": "surfaces",
-        "repositories": ["firelock-ai/kin-vfs", "firelock-ai/kin-lsp"],
+        "repositories": ["kinlab-ai/kin-vfs", "kinlab-ai/kin-lsp"],
     },
     {
         "id": "other-consumers",
         "repositories": [
-            "firelock-ai/kin",
-            "firelock-ai/kin-bench",
-            "firelock-ai/kinlab",
-            "firelock-ai/kin-bench-spec",
-            "firelock-ai/kin-editor",
-            "firelock-ai/kin-infra",
-            "firelock-ai/homebrew-kin",
+            "kinlab-ai/kin",
+            "kinlab-ai/kin-bench",
+            "kinlab-ai/kinlab",
+            "kinlab-ai/kin-bench-spec",
+            "kinlab-ai/kin-editor",
+            "kinlab-ai/kin-infra",
+            "kinlab-ai/homebrew-kin",
         ],
     },
 ]
@@ -232,8 +232,8 @@ def load_manifest(path: Path) -> dict:
     protocol = _exact_keys(data["protocol"], PROTOCOL_KEYS, "protocol")
     if parse_version(protocol["minimum_version"]) != (0, 1, 34):
         raise RolloutError("protocol minimum_version must remain exactly 0.1.34")
-    if protocol["pilot_repository"] != "firelock-ai/kin-blobs":
-        raise RolloutError("the only pilot authority is firelock-ai/kin-blobs")
+    if protocol["pilot_repository"] != "kinlab-ai/kin-blobs":
+        raise RolloutError("the only pilot authority is kinlab-ai/kin-blobs")
     if protocol["pin_branch"] != "automation/kin-actions-pin-next":
         raise RolloutError("pin_branch must preserve the protected automation branch")
     if protocol["required_check_app_id"] != 15368:

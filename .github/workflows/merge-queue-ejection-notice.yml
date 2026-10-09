@@ -21,7 +21,7 @@ name: Merge Queue Ejection Notice
 #     pull-requests: write
 #   jobs:
 #     notice:
-#       uses: firelock-ai/kin-actions/.github/workflows/merge-queue-ejection-notice.yml@<ref>
+#       uses: kinlab-ai/kin-actions/.github/workflows/merge-queue-ejection-notice.yml@<ref>
 #
 # workflow_run is the right trigger rather than an `if: failure()` job inside
 # each CI workflow: the check that ejects a PR is frequently in a different

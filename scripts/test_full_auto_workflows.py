@@ -58,7 +58,7 @@ class FullAutoWorkflowContracts(unittest.TestCase):
 
     def test_recovery_alarm_lands_on_kin_infra_with_an_issues_only_token(self) -> None:
         # The terminal issue moved off the calling repository's public tab onto
-        # firelock-ai/kin-infra. The caller-scoped token cannot write there, so
+        # kinlab-ai/kin-infra. The caller-scoped token cannot write there, so
         # the alarm mints its own App token scoped to the caller and kin-infra
         # with issues: write and nothing else, and every issue call in the
         # terminal step targets kin-infra through that token.
@@ -85,7 +85,7 @@ class FullAutoWorkflowContracts(unittest.TestCase):
         step = step_block(self.recovery, "Reconcile terminal failure issue")
         self.assertIn("Fail visibly", self.recovery[self.recovery.index(step) + len(step):])
         self.assertIn("GH_TOKEN: ${{ steps.alarm_token.outputs.token }}", step)
-        self.assertIn("ALARM_REPO: firelock-ai/kin-infra", step)
+        self.assertIn("ALARM_REPO: kinlab-ai/kin-infra", step)
         self.assertIn("ALARM_LABEL: ${{ github.event.repository.name }}", step)
         self.assertIn('--label "$ALARM_LABEL"', step)
         self.assertNotIn('--repo "$GITHUB_REPOSITORY"', step)
@@ -96,7 +96,7 @@ class FullAutoWorkflowContracts(unittest.TestCase):
         self.assertIn("repository_dispatch:", dry_run)
         self.assertIn("environment: release-tag", dry_run)
         self.assertIn("permission-issues: write", dry_run)
-        self.assertIn("ALARM_REPO: firelock-ai/kin-infra", dry_run)
+        self.assertIn("ALARM_REPO: kinlab-ai/kin-infra", dry_run)
 
     def test_every_train_is_serialized_without_cancellation(self) -> None:
         for text in (
@@ -569,21 +569,21 @@ class FullAutoWorkflowContracts(unittest.TestCase):
     def test_manifest_contains_every_live_external_consumer_path(self) -> None:
         manifest = json.loads(read(".kin-release/consumers.json"))
         expected = {
-            "firelock-ai/kin",
-            "firelock-ai/kin-bench",
-            "firelock-ai/kinlab",
-            "firelock-ai/kin-model",
-            "firelock-ai/kin-db",
-            "firelock-ai/kin-lsp",
-            "firelock-ai/kin-vfs",
-            "firelock-ai/kin-infer",
-            "firelock-ai/kin-vector",
-            "firelock-ai/kin-search",
-            "firelock-ai/kin-blobs",
-            "firelock-ai/kin-bench-spec",
-            "firelock-ai/kin-editor",
-            "firelock-ai/kin-infra",
-            "firelock-ai/homebrew-kin",
+            "kinlab-ai/kin",
+            "kinlab-ai/kin-bench",
+            "kinlab-ai/kinlab",
+            "kinlab-ai/kin-model",
+            "kinlab-ai/kin-db",
+            "kinlab-ai/kin-lsp",
+            "kinlab-ai/kin-vfs",
+            "kinlab-ai/kin-infer",
+            "kinlab-ai/kin-vector",
+            "kinlab-ai/kin-search",
+            "kinlab-ai/kin-blobs",
+            "kinlab-ai/kin-bench-spec",
+            "kinlab-ai/kin-editor",
+            "kinlab-ai/kin-infra",
+            "kinlab-ai/homebrew-kin",
         }
         self.assertEqual(manifest["schema"], 2)
         self.assertEqual(set(manifest["repositories"]), expected)

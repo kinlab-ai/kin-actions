@@ -27,8 +27,8 @@ class WorkflowPinMainProofTests(unittest.TestCase):
             "event": "push",
             "status": "completed",
             "conclusion": "success",
-            "repository": {"full_name": "firelock-ai/kin-blobs"},
-            "head_repository": {"full_name": "firelock-ai/kin-blobs"},
+            "repository": {"full_name": "kinlab-ai/kin-blobs"},
+            "head_repository": {"full_name": "kinlab-ai/kin-blobs"},
         }
         value.update(overrides)
         return value
@@ -41,7 +41,7 @@ class WorkflowPinMainProofTests(unittest.TestCase):
 
     def test_all_four_release_jobs_prove_exact_main(self) -> None:
         result = proof.evaluate_main_proof(
-            repository="firelock-ai/kin-blobs",
+            repository="kinlab-ai/kin-blobs",
             branch="main",
             head_sha=self.sha,
             runs=[self.workflow_run()],
@@ -52,7 +52,7 @@ class WorkflowPinMainProofTests(unittest.TestCase):
     def test_no_run_and_incomplete_run_wait(self) -> None:
         self.assertEqual(
             proof.evaluate_main_proof(
-                repository="firelock-ai/kin-blobs",
+                repository="kinlab-ai/kin-blobs",
                 branch="main",
                 head_sha=self.sha,
                 runs=[],
@@ -62,7 +62,7 @@ class WorkflowPinMainProofTests(unittest.TestCase):
         )
         self.assertEqual(
             proof.evaluate_main_proof(
-                repository="firelock-ai/kin-blobs",
+                repository="kinlab-ai/kin-blobs",
                 branch="main",
                 head_sha=self.sha,
                 runs=[self.workflow_run(status="in_progress", conclusion=None)],
@@ -82,7 +82,7 @@ class WorkflowPinMainProofTests(unittest.TestCase):
             with self.subTest(run=run):
                 self.assertEqual(
                     proof.evaluate_main_proof(
-                        repository="firelock-ai/kin-blobs",
+                        repository="kinlab-ai/kin-blobs",
                         branch="main",
                         head_sha=self.sha,
                         runs=[run],
@@ -95,7 +95,7 @@ class WorkflowPinMainProofTests(unittest.TestCase):
         missing = self.jobs()[:-1]
         with self.assertRaisesRegex(proof.MainProofError, "lacks release jobs"):
             proof.evaluate_main_proof(
-                repository="firelock-ai/kin-blobs",
+                repository="kinlab-ai/kin-blobs",
                 branch="main",
                 head_sha=self.sha,
                 runs=[self.workflow_run()],
@@ -105,7 +105,7 @@ class WorkflowPinMainProofTests(unittest.TestCase):
         wrong[-1]["conclusion"] = "success"
         with self.assertRaisesRegex(proof.MainProofError, "conclusions differ"):
             proof.evaluate_main_proof(
-                repository="firelock-ai/kin-blobs",
+                repository="kinlab-ai/kin-blobs",
                 branch="main",
                 head_sha=self.sha,
                 runs=[self.workflow_run()],
