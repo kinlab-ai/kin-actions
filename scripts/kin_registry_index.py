@@ -4,12 +4,18 @@
 Only an HTTP 404 represents an unpublished crate. Every successful response
 must contain at least one valid Cargo index row; transport, decoding, JSON, and
 schema failures are authority failures rather than an empty registry.
+
+An HTTP 5xx is retried with backoff. If the registry still answers 5xx, the
+fetch raises RegistryUnavailableError (a RegistryIndexError) so a scheduled
+caller can report an outage instead of a broken run. It is never read as
+"unpublished".
 """
 
 from __future__ import annotations
 
 import json
 import re
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -37,6 +43,14 @@ _CHECKSUM = re.compile(r"^[0-9a-fA-F]{64}$")
 
 class RegistryIndexError(RuntimeError):
     """Sparse-index authority could not be established."""
+
+
+class RegistryUnavailableError(RegistryIndexError):
+    """The registry kept answering HTTP 5xx after every retry."""
+
+
+# Delays between attempts on an HTTP 5xx: four attempts, about 14s in all.
+RETRY_DELAYS_SECONDS: tuple[float, ...] = (2, 4, 8)
 
 
 @dataclass(frozen=True)
@@ -207,21 +221,47 @@ def fetch_index(
     *,
     timeout: float = 10,
     opener: Callable[..., object] | None = None,
+    retry_delays: tuple[float, ...] | None = None,
+    sleep: Callable[[float], None] | None = None,
 ) -> tuple[RegistryVersion, ...] | None:
-    """Fetch one strict sparse index, returning ``None`` only for HTTP 404."""
+    """Fetch one strict sparse index, returning ``None`` only for HTTP 404.
+
+    An HTTP 5xx is retried after each delay in ``retry_delays``. If every
+    attempt answers 5xx, RegistryUnavailableError is raised.
+    """
 
     if opener is None:
         opener = urllib.request.urlopen
+    if retry_delays is None:
+        retry_delays = RETRY_DELAYS_SECONDS
+    if sleep is None:
+        sleep = time.sleep
     url = (
         f"{registry_url.rstrip('/')}/registry/cargo/"
         f"{sparse_index_path(crate_name)}"
     )
+    attempts = len(retry_delays) + 1
+    attempt = 0
     try:
-        with opener(url, timeout=timeout) as response:
-            body = response.read()
+        while True:
+            attempt += 1
+            try:
+                with opener(url, timeout=timeout) as response:
+                    body = response.read()
+                break
+            except urllib.error.HTTPError as exc:
+                if 500 <= exc.code <= 599 and attempt < attempts:
+                    sleep(retry_delays[attempt - 1])
+                    continue
+                raise
     except urllib.error.HTTPError as exc:
         if exc.code == 404:
             return None
+        if 500 <= exc.code <= 599:
+            raise RegistryUnavailableError(
+                f"could not read registry index {url}: HTTP {exc.code} "
+                f"after {attempts} attempts"
+            ) from exc
         raise RegistryIndexError(
             f"could not read registry index {url}: HTTP {exc.code}"
         ) from exc
