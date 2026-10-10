@@ -32,7 +32,7 @@ class ReleaseWorkflowPinTests(unittest.TestCase):
             f"""
 jobs:
   release:
-    uses: firelock-ai/kin-actions/.github/workflows/release.yml@{SHA}
+    uses: kinlab-ai/kin-actions/.github/workflows/release.yml@{SHA}
     steps:
       - uses: actions/checkout@{SHA} # immutable
 """

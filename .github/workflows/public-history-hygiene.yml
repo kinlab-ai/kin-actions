@@ -11,7 +11,7 @@ name: Public History Hygiene
 # Consume from another repo:
 #   jobs:
 #     hygiene:
-#       uses: firelock-ai/kin-actions/.github/workflows/public-history-hygiene.yml@v0.1.22
+#       uses: kinlab-ai/kin-actions/.github/workflows/public-history-hygiene.yml@v0.1.22
 #
 # A repository adopting the gate for the first time can consume it with
 # `scan-history: false`, which checks the pull request title and body alone.

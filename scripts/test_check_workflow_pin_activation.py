@@ -22,7 +22,7 @@ class WorkflowPinActivationTests(unittest.TestCase):
     def valid(self) -> dict:
         return {
             "id": activation.EXPECTED_RULESET_ID,
-            "source": "firelock-ai/kin-actions",
+            "source": "kinlab-ai/kin-actions",
             "source_type": "Repository",
             "name": "Freeze version release tags",
             "target": "tag",

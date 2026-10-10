@@ -22,7 +22,7 @@ GOOD_CONCLUSIONS = {"success", "skipped"}
 GOOD_REQUIRED_BUCKETS = {"pass", "skipping"}
 PIN_DIFF_RE = re.compile(
     r"^(?P<prefix>[ \t]*(?:-[ \t]+)?uses:[ \t]*"
-    r"firelock-ai/kin-actions/\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml@v)"
+    r"(?:kinlab-ai|firelock-ai)/kin-actions/\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml@v)"
     r"(?P<version>(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\."
     r"(?:0|[1-9][0-9]*))(?P<suffix>[ \t]*(?:#.*)?)$"
 )

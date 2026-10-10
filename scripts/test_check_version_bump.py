@@ -453,8 +453,8 @@ class PinChorePr(unittest.TestCase):
     def detect(self, **kwargs):
         defaults = dict(
             event_name="pull_request",
-            base_repo="firelock-ai/kin-blobs",
-            head_repo="firelock-ai/kin-blobs",
+            base_repo="kinlab-ai/kin-blobs",
+            head_repo="kinlab-ai/kin-blobs",
             head_branch="automation/kin-actions-pin-next",
             pin_branch="automation/kin-actions-pin-next",
         )
@@ -609,7 +609,7 @@ class PinChoreIntegration(unittest.TestCase):
         changed,
         labels="release:automated,release:consumer-bump",
         head_branch="automation/kin-actions-pin-next",
-        head_repo="firelock-ai/kin-blobs",
+        head_repo="kinlab-ai/kin-blobs",
     ):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "output"
@@ -632,7 +632,7 @@ class PinChoreIntegration(unittest.TestCase):
                 "--default-branch",
                 "main",
                 "--base-repo",
-                "firelock-ai/kin-blobs",
+                "kinlab-ai/kin-blobs",
                 "--head-repo",
                 head_repo,
                 "--head-branch",

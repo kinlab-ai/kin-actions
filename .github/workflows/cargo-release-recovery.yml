@@ -43,7 +43,7 @@ permissions:
   # The caller-scoped token may rerun only the exact failed tag Release run.
   # The release App remains narrower and receives no Actions/Workflows grant.
   actions: write
-  # Terminal signaling lands on firelock-ai/kin-infra, the private ops
+  # Terminal signaling lands on kinlab-ai/kin-infra, the private ops
   # repository, rather than on the calling repository's public issue tab. This
   # token cannot write to another repository, so the alarm below mints its own
   # release App token carrying issues: write on the caller and kin-infra and
@@ -198,7 +198,7 @@ jobs:
           # Where every alarm this file raises now lives, and the label that
           # says which repository it is about, since kin-infra collects the
           # alarms of every repository that calls this workflow.
-          ALARM_REPO: firelock-ai/kin-infra
+          ALARM_REPO: kinlab-ai/kin-infra
           ALARM_LABEL: ${{ github.event.repository.name }}
           JOB_STATUS: ${{ job.status }}
           BUDGET_OUTCOME: ${{ steps.controller_budget.outcome }}

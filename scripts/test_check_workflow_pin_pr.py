@@ -26,7 +26,7 @@ class WorkflowPinAdmissionTests(unittest.TestCase):
             "head": {
                 "sha": sha or self.sha,
                 "ref": "automation/kin-actions-pin-next",
-                "repo": {"full_name": "firelock-ai/kin-blobs"},
+                "repo": {"full_name": "kinlab-ai/kin-blobs"},
             },
             "base": {"ref": "main", "sha": "b" * 40},
         }
@@ -50,7 +50,7 @@ class WorkflowPinAdmissionTests(unittest.TestCase):
 
     def settings(self) -> dict:
         return {
-            "full_name": "firelock-ai/kin-blobs",
+            "full_name": "kinlab-ai/kin-blobs",
             "default_branch": "main",
             **admission.protection_guard.EXPECTED_SETTINGS,
         }
@@ -72,7 +72,7 @@ class WorkflowPinAdmissionTests(unittest.TestCase):
             "required_checks": self.required(),
             "repository_settings": self.settings(),
             "status_checks": self.status_checks(),
-            "repository": "firelock-ai/kin-blobs",
+            "repository": "kinlab-ai/kin-blobs",
             "base": "main",
             "base_sha": "b" * 40,
             "head_branch": "automation/kin-actions-pin-next",

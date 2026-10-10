@@ -17,7 +17,7 @@ SEMVER_RE = re.compile(
     r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$"
 )
 PIN_RE = re.compile(
-    r"(?P<prefix>firelock-ai/kin-actions/\.github/workflows/"
+    r"(?P<prefix>(?:kinlab-ai|firelock-ai)/kin-actions/\.github/workflows/"
     r"[A-Za-z0-9_.-]+\.ya?ml@v)"
     r"(?P<version>(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\."
     r"(?:0|[1-9][0-9]*))"

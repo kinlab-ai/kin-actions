@@ -68,12 +68,12 @@ class SelfReleasePreparationTests(unittest.TestCase):
         self.readme = self.root / "README.md"
         self.contributing = self.root / "CONTRIBUTING.md"
         self.readme.write_text(
-            "uses: firelock-ai/kin-actions/.github/workflows/"
+            "uses: kinlab-ai/kin-actions/.github/workflows/"
             "cargo-registry-release.yml@v0.1.22\n",
             encoding="utf-8",
         )
         self.contributing.write_text(
-            "uses: firelock-ai/kin-actions/.github/workflows/"
+            "uses: kinlab-ai/kin-actions/.github/workflows/"
             "public-history-hygiene.yml@v0.1.8\n",
             encoding="utf-8",
         )
@@ -138,7 +138,7 @@ class SelfReleasePreparationTests(unittest.TestCase):
 
     def test_newer_doc_pin_fails_before_any_write(self) -> None:
         self.readme.write_text(
-            "firelock-ai/kin-actions/.github/workflows/x.yml@v9.0.0\n",
+            "kinlab-ai/kin-actions/.github/workflows/x.yml@v9.0.0\n",
             encoding="utf-8",
         )
         before = (self.root / "VERSION").read_bytes()

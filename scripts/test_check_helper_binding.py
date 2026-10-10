@@ -87,7 +87,7 @@ class HelperBindingTests(unittest.TestCase):
                 self.assertEqual(len(binding.checkout_blocks(text)), 1)
 
     def test_missing_repository_binding_is_flagged(self) -> None:
-        text = step(name=True, repository="firelock-ai/kin-actions", ref=BOUND_REF)
+        text = step(name=True, repository="kinlab-ai/kin-actions", ref=BOUND_REF)
         self.assertIn(
             "helper checkout 1 does not use job.workflow_repository",
             self.violations(text),

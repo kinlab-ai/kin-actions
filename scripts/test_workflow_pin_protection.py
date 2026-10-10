@@ -17,7 +17,7 @@ SPEC.loader.exec_module(protection)
 
 
 class WorkflowPinProtectionTests(unittest.TestCase):
-    repository = "firelock-ai/kin-blobs"
+    repository = "kinlab-ai/kin-blobs"
 
     def settings(self, **overrides) -> dict:
         value = {

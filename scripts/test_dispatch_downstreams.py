@@ -81,7 +81,7 @@ class DispatchIntegration(unittest.TestCase):
         self,
         statuses: list[int],
         *,
-        repo: str = "firelock-ai/kin-db",
+        repo: str = "kinlab-ai/kin-db",
         downstreams: list[object] | None = None,
         include_token: bool = True,
     ) -> tuple[subprocess.CompletedProcess[str], list[dict[str, object]]]:
@@ -101,7 +101,7 @@ class DispatchIntegration(unittest.TestCase):
                     **os.environ,
                     "PACKAGE": "kin-model",
                     "VERSION": "0.7.0",
-                    "GITHUB_REPOSITORY": "firelock-ai/kin-model",
+                    "GITHUB_REPOSITORY": "kinlab-ai/kin-model",
                     "GITHUB_SHA": "a" * 40,
                     "DOWNSTREAM_MANIFEST": str(manifest),
                     "KIN_GITHUB_API_URL": server.url,
@@ -140,9 +140,9 @@ class DispatchIntegration(unittest.TestCase):
                         "crate_name": "kin-model",
                         "crate_version": "0.7.0",
                         "delivery_id": (
-                            f"firelock-ai/kin-model@{'a' * 40}:kin-model@0.7.0"
+                            f"kinlab-ai/kin-model@{'a' * 40}:kin-model@0.7.0"
                         ),
-                        "source_repo": "firelock-ai/kin-model",
+                        "source_repo": "kinlab-ai/kin-model",
                         "source_sha": "a" * 40,
                     },
                 },
@@ -177,7 +177,7 @@ class DispatchIntegration(unittest.TestCase):
     def test_long_server_delay_fails_without_early_retry(self) -> None:
         with self.assertRaisesRegex(dispatch.DispatchError, "refusing to retry early"):
             dispatch._consume_retry_budget(
-                repo="firelock-ai/kin-db",
+                repo="kinlab-ai/kin-db",
                 delay=120,
                 retry_deadline=30,
                 clock=lambda: 0,
@@ -190,8 +190,8 @@ class DispatchIntegration(unittest.TestCase):
                 json.dumps(
                     {
                         "downstreams": [
-                            {"repo": "firelock-ai/kin-db"},
-                            {"repo": "firelock-ai/kin"},
+                            {"repo": "kinlab-ai/kin-db"},
+                            {"repo": "kinlab-ai/kin"},
                         ]
                     }
                 )
@@ -212,7 +212,7 @@ class DispatchIntegration(unittest.TestCase):
                     manifest,
                     "kin-model",
                     "0.7.0",
-                    "firelock-ai/kin-model",
+                    "kinlab-ai/kin-model",
                     "a" * 40,
                 )
         self.assertEqual(dispatch_one.call_count, 2)
@@ -225,7 +225,7 @@ class DispatchIntegration(unittest.TestCase):
         now = [0.0]
         deadline = 30.0
         dispatch._consume_retry_budget(
-            repo="firelock-ai/kin-db",
+            repo="kinlab-ai/kin-db",
             delay=20,
             retry_deadline=deadline,
             clock=lambda: now[0],
@@ -235,7 +235,7 @@ class DispatchIntegration(unittest.TestCase):
             dispatch.DispatchError, "remaining 10.0s retry wait budget"
         ):
             dispatch._consume_retry_budget(
-                repo="firelock-ai/kin",
+                repo="kinlab-ai/kin",
                 delay=11,
                 retry_deadline=deadline,
                 clock=lambda: now[0],

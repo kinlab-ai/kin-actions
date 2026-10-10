@@ -67,14 +67,14 @@ RUN_ID_LOOKUP_SH = """\
 #!/usr/bin/env bash
 set -euo pipefail
 release_run_id="$1"
-run_json="$(gh api "repos/firelock-ai/kin/actions/runs/${release_run_id}")"
+run_json="$(gh api "repos/kinlab-ai/kin/actions/runs/${release_run_id}")"
 echo "$run_json"
 """
 
 RUNS_LIST_SH = """\
 #!/usr/bin/env bash
 set -euo pipefail
-runs="$(gh api 'repos/firelock-ai/kin/actions/workflows/release.yml/runs?event=push&per_page=100')"
+runs="$(gh api 'repos/kinlab-ai/kin/actions/workflows/release.yml/runs?event=push&per_page=100')"
 echo "$runs"
 """
 
@@ -277,7 +277,7 @@ class FoundLookups(GuardCase):
     def test_yaml_workflow_body_is_scanned(self):
         dirty = CLEAN_WORKFLOW + (
             '      - name: Resolve the release run\n'
-            '        run: gh api "repos/firelock-ai/kin/actions/runs/${RELEASE_RUN_ID}"\n'
+            '        run: gh api "repos/kinlab-ai/kin/actions/runs/${RELEASE_RUN_ID}"\n'
         )
         root = self.repo({".github/workflows/verify.yml": dirty})
         rc, out = self.run_guard(root)
@@ -522,7 +522,7 @@ class AllowlistContract(GuardCase):
             "file": "scripts/verify.sh",
             "reason": "pinned expression",
             "owner": "infra-release",
-            "allow_matches": ["repos/firelock-ai/kin/actions/runs/${release_run_id}"],
+            "allow_matches": ["repos/kinlab-ai/kin/actions/runs/${release_run_id}"],
         }])
         rc, out = self.run_guard(root, "--allowlist", name)
         self.assertEqual(rc, EXIT_ALLOWLIST, out)
@@ -623,7 +623,7 @@ class AllowlistErrorsNeverMaskTheScan(GuardCase):
             "file": "scripts/verify.sh",
             "reason": "fix in flight",
             "owner": "infra-release",
-            "allow_match": ["repos/firelock-ai/kin/actions/runs/${moved_since}"],
+            "allow_match": ["repos/kinlab-ai/kin/actions/runs/${moved_since}"],
         }])
         rc, out = self.run_guard(root, "--allowlist", name)
         self.assertEqual(rc, EXIT_ALLOWLIST, out)
