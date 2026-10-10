@@ -85,6 +85,10 @@ class BlockedRoll:
     package: str
 
 
+class RegistryUnavailable(UpdateError):
+    """The registry kept answering HTTP 5xx; nothing about the pins was judged."""
+
+
 class BlockedRollError(UpdateError):
     """Cargo refused the roll because another package pins the old version.
 
@@ -136,6 +140,8 @@ def registry_records(
 
     try:
         return registry_index.fetch_index(registry_url, crate)
+    except registry_index.RegistryUnavailableError as exc:
+        raise RegistryUnavailable(str(exc)) from exc
     except registry_index.RegistryIndexError as exc:
         raise UpdateError(str(exc)) from exc
 
@@ -883,6 +889,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     except BlockedRollError as exc:
         print(f"dependency wave blocked: {exc}", file=sys.stderr)
         return 3
+    except RegistryUnavailable as exc:
+        # Exit 4: an outage, not a fact about the pins. The workflow reports it
+        # as a warning and ends the run without failing it.
+        print(f"dependency wave skipped: registry unavailable: {exc}", file=sys.stderr)
+        return 4
     except (UpdateError, OSError) as exc:
         print(f"dependency wave aborted: {exc}", file=sys.stderr)
         return 1
