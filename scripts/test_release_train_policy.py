@@ -46,6 +46,38 @@ class TrainPolicyTests(unittest.TestCase):
         self.assertTrue(result["release_needed"])
         self.assertFalse(result["release_candidate"])
 
+    def test_unread_registry_passes_only_a_run_that_ships_nothing(self) -> None:
+        result = self.gate(published=None, changed_paths=[".github/workflows/ci.yml"])
+        self.assertEqual(result["failures"], [])
+        self.assertFalse(result["release_needed"])
+        self.assertFalse(result["release_candidate"])
+
+    def test_unread_registry_fails_closed_when_the_run_depends_on_it(self) -> None:
+        cases = {
+            "source PR": dict(relevant_paths=["src/lib.rs"]),
+            "controller": dict(event_name="controller"),
+            "generated train PR": dict(
+                version="0.1.1",
+                changed_paths=["Cargo.toml", "Cargo.lock"],
+                labels=["release:automated", "release:patch"],
+                head_branch="automation/release-next",
+            ),
+            "version-moving push": dict(
+                version="0.1.1",
+                changed_paths=["Cargo.toml"],
+                event_name="push",
+                ref_name="main",
+                head_branch="main",
+            ),
+        }
+        for name, changes in cases.items():
+            with self.subTest(name):
+                result = self.gate(published=None, **changes)
+                self.assertTrue(
+                    any("was not read" in item for item in result["failures"])
+                )
+                self.assertFalse(result["release_candidate"])
+
     def test_ordinary_manual_version_edit_fails(self) -> None:
         result = self.gate(version="0.1.1", changed_paths=["Cargo.toml"])
         self.assertTrue(any("manual version edits" in item for item in result["failures"]))

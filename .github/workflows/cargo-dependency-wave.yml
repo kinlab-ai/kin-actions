@@ -286,6 +286,23 @@ jobs:
                 echo "::error title=Kin dependency wave blocked::$reason"
                 exit 3
                 ;;
+              4)
+                # Status 4: the Kin registry kept answering HTTP 5xx after the
+                # updater's retries. That is an outage, not a pin decision, so
+                # report it and end without a PR or a red run. The next
+                # scheduled wave tries again.
+                reason="$(printf '%s\n' "$out" \
+                  | sed -n 's/^dependency wave skipped: registry unavailable: //p' | head -1)"
+                {
+                  echo "### Kin registry unavailable"
+                  echo
+                  echo "> ${reason:-the registry answered HTTP 5xx after every retry}"
+                  echo
+                  echo "No pins were judged and no PR was opened. The next wave retries."
+                } >> "$GITHUB_STEP_SUMMARY"
+                echo "::warning title=Kin registry unavailable::${reason:-registry answered HTTP 5xx after every retry}; dependency wave skipped"
+                return 4
+                ;;
               *)
                 echo "::error::dependency updater failed with exit code $result; aborting without a PR"
                 exit "$result"

@@ -13,6 +13,7 @@ headline cases the gate must get right are covered explicitly:
   * a crate-``src`` PR still REQUIRES one
     (``EvaluateGate.test_crate_src_change_without_bump_fails``).
 """
+import contextlib
 import importlib.util
 import io
 import json
@@ -281,6 +282,24 @@ class EvaluateGate(unittest.TestCase):
         self.assertFalse(require_bump)
         self.assertEqual(failures, [])
         self.assertEqual(relevant, [])
+
+    def test_unread_registry_passes_a_change_that_ships_nothing(self):
+        failures, require_bump, _ = self.gate(published=None)
+        self.assertFalse(require_bump)
+        self.assertEqual(failures, [])
+
+    def test_unread_registry_fails_closed_for_a_release_change(self):
+        failures, require_bump, _ = self.gate(
+            published=None,
+            version="0.2.0",
+            source_changes=["crates/x/src/lib.rs"],
+        )
+        self.assertTrue(require_bump)
+        self.assertTrue(any("was not read" in m for m in failures))
+
+    def test_unread_registry_fails_closed_for_a_version_move(self):
+        failures, _, _ = self.gate(published=None, version="0.1.1")
+        self.assertTrue(any("was not read" in m for m in failures))
 
     def test_crate_src_change_without_bump_fails(self):
         failures, require_bump, _ = self.gate(source_changes=["crates/x/src/lib.rs"])
@@ -916,6 +935,219 @@ class RegistryVersions(unittest.TestCase):
                 cvb.published_versions("https://kinlab.ai", "x"),
                 ["1.0.0-rc.1", "1.0.0", "2.0.0"],
             )
+
+    def test_every_request_names_kin_actions_in_its_user_agent(self):
+        # Cloudflare refuses urllib's default Python-urllib agent with error
+        # 1010 (HTTP 403), so the reader must name itself on every attempt.
+        version = (
+            Path(__file__).resolve().parent.parent / "VERSION"
+        ).read_text(encoding="utf-8").strip()
+        expected = (
+            f"kin-actions/{version} (+https://github.com/kinlab-ai/kin-actions)"
+        )
+        self.assertEqual(cvb.registry_index.USER_AGENT, expected)
+        error = urllib.error.HTTPError(
+            "https://kinlab.ai/registry/cargo/1/x", 503, "Unavailable", {}, io.BytesIO()
+        )
+        self.addCleanup(error.close)
+        with (
+            mock.patch(
+                "urllib.request.urlopen",
+                side_effect=[error, self.response(registry_row())],
+            ) as urlopen,
+            mock.patch.object(cvb.registry_index.time, "sleep"),
+        ):
+            self.assertEqual(
+                cvb.published_versions("https://kinlab.ai", "x"), ["1.0.0"]
+            )
+        self.assertEqual(urlopen.call_count, 2)
+        for call in urlopen.call_args_list:
+            request = call.args[0]
+            self.assertEqual(request.full_url, "https://kinlab.ai/registry/cargo/1/x")
+            self.assertEqual(request.get_header("User-agent"), expected)
+
+
+class RegistryReadReasons(unittest.TestCase):
+    def reasons(self, **kwargs):
+        defaults = dict(
+            version_mode="manual",
+            version="0.1.5",
+            base_version="0.1.5",
+            relevant=[],
+            release_label=False,
+            pin_chore=False,
+            event_name="pull_request",
+            train_authority=False,
+        )
+        defaults.update(kwargs)
+        return cvb.registry_read_reasons(**defaults)
+
+    def test_change_that_keeps_base_version_and_ships_nothing_needs_no_registry(self):
+        self.assertEqual(self.reasons(), [])
+        self.assertEqual(self.reasons(event_name="push"), [])
+        self.assertEqual(self.reasons(version_mode="train"), [])
+        self.assertEqual(self.reasons(version_mode="train", event_name="merge_group"), [])
+
+    def test_every_release_trigger_needs_the_registry(self):
+        triggers = {
+            "relevant": dict(relevant=["src/lib.rs"]),
+            "label": dict(release_label=True),
+            "no base": dict(base_version=None),
+            "version moved": dict(version="0.1.6"),
+            "version downgraded": dict(version="0.1.4"),
+            "push that releases": dict(event_name="push", version="0.1.6"),
+            "train relevant": dict(version_mode="train", relevant=["src/lib.rs"]),
+            "train controller": dict(version_mode="train", event_name="controller"),
+            "train PR": dict(version_mode="train", train_authority=True),
+        }
+        for name, kwargs in triggers.items():
+            with self.subTest(name):
+                self.assertTrue(self.reasons(**kwargs))
+
+    def test_pin_chore_label_needs_no_registry(self):
+        self.assertEqual(self.reasons(release_label=True, pin_chore=True), [])
+
+    def test_train_mode_labels_force_no_registry_read(self):
+        self.assertEqual(self.reasons(version_mode="train", release_label=True), [])
+
+
+class RegistryOutage(unittest.TestCase):
+    """Replay the gate end to end while the registry answers HTTP 503.
+
+    A change that keeps the base version and ships nothing must pass without
+    reading the registry. Every change whose verdict depends on registry
+    history must still stop on the outage.
+    """
+
+    OUTAGE = (
+        "could not read registry index "
+        "https://kinlab.ai/registry/cargo/ki/n-/kin-blobs: HTTP 503 after 4 attempts"
+    )
+
+    def run_gate(
+        self,
+        *,
+        changed,
+        version="0.1.5",
+        labels="",
+        event_name="pull_request",
+        version_mode="manual",
+    ):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "output"
+            argv = [
+                "check-version-bump.py",
+                "--package",
+                "kin-blobs",
+                "--manifest",
+                "Cargo.toml",
+                "--base-ref",
+                "origin/main",
+                "--version-mode",
+                version_mode,
+                "--event-name",
+                event_name,
+                "--ref-type",
+                "branch",
+                "--ref-name",
+                "main" if event_name == "push" else "fix/workflow-permissions",
+                "--default-branch",
+                "main",
+                "--base-repo",
+                "kinlab-ai/kin-blobs",
+                "--head-repo",
+                "kinlab-ai/kin-blobs",
+                "--head-branch",
+                "fix/workflow-permissions",
+                "--labels",
+                labels,
+                "--generated-path",
+                "Cargo.toml",
+                "--generated-path",
+                "Cargo.lock",
+            ]
+            stdout = io.StringIO()
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(cvb, "cargo_metadata_version", return_value=version),
+                mock.patch.object(cvb, "read_manifest_version", return_value=version),
+                mock.patch.object(
+                    cvb, "published_versions", side_effect=SystemExit(self.OUTAGE)
+                ) as published,
+                mock.patch.object(cvb, "select_base_ref", return_value="origin/main"),
+                mock.patch.object(cvb, "changed_files", return_value=changed),
+                mock.patch.object(cvb, "base_manifest_version", return_value="0.1.5"),
+                mock.patch.object(cvb, "verify_generated_release"),
+                mock.patch.dict(
+                    os.environ, {"GITHUB_OUTPUT": str(output)}, clear=False
+                ),
+                contextlib.redirect_stdout(stdout),
+            ):
+                code = cvb.main()
+            values = dict(
+                line.split("=", 1)
+                for line in output.read_text(encoding="utf-8").splitlines()
+            )
+        return code, values, stdout.getvalue(), published
+
+    def assert_passes_without_registry(self, **kwargs):
+        code, values, stdout, published = self.run_gate(**kwargs)
+        self.assertEqual(code, 0, stdout)
+        published.assert_not_called()
+        self.assertEqual(values["release_needed"], "false")
+        self.assertEqual(values["release_candidate"], "false")
+        self.assertIn("registry read     : no", stdout)
+        self.assertIn("newest published  : <not read>", stdout)
+        self.assertIn("The registry was not read", stdout)
+
+    def assert_fails_closed(self, **kwargs):
+        with self.assertRaisesRegex(SystemExit, "HTTP 503"):
+            self.run_gate(**kwargs)
+
+    def test_workflow_only_pr_passes_while_registry_is_down(self):
+        self.assert_passes_without_registry(
+            changed=[
+                ".github/workflows/ci.yml",
+                ".github/workflows/registry-publish.yml",
+            ]
+        )
+
+    def test_docs_and_tests_only_pr_passes_while_registry_is_down(self):
+        self.assert_passes_without_registry(changed=["README.md", "tests/it.rs"])
+
+    def test_workflow_only_main_push_passes_while_registry_is_down(self):
+        self.assert_passes_without_registry(
+            changed=[".github/workflows/ci.yml"], event_name="push"
+        )
+
+    def test_train_mode_workflow_only_pr_passes_while_registry_is_down(self):
+        self.assert_passes_without_registry(
+            changed=[".github/workflows/ci.yml"], version_mode="train"
+        )
+
+    def test_source_change_fails_closed_while_registry_is_down(self):
+        self.assert_fails_closed(changed=["src/lib.rs"], version="0.1.6")
+
+    def test_version_move_fails_closed_while_registry_is_down(self):
+        self.assert_fails_closed(changed=[".github/workflows/ci.yml"], version="0.1.6")
+
+    def test_release_label_fails_closed_while_registry_is_down(self):
+        self.assert_fails_closed(changed=[".github/workflows/ci.yml"], labels="release")
+
+    def test_releasing_main_push_fails_closed_while_registry_is_down(self):
+        self.assert_fails_closed(
+            changed=[".github/workflows/ci.yml"], version="0.1.6", event_name="push"
+        )
+
+    def test_train_controller_fails_closed_while_registry_is_down(self):
+        self.assert_fails_closed(
+            changed=[".github/workflows/ci.yml"],
+            version_mode="train",
+            event_name="controller",
+        )
+
+    def test_train_source_pr_fails_closed_while_registry_is_down(self):
+        self.assert_fails_closed(changed=["src/lib.rs"], version_mode="train")
 
 
 if __name__ == "__main__":

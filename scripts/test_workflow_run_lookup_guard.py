@@ -181,9 +181,14 @@ class GuardCase(unittest.TestCase):
         return name
 
     def run_guard(self, root, *args, checker=None):
+        # Stop Git's repository search at the fixture, so a temporary directory
+        # created inside another checkout still reads as outside any repository.
+        env = dict(os.environ)
+        env["GIT_CEILING_DIRECTORIES"] = str(Path(root).resolve().parent)
         result = subprocess.run(
             [sys.executable, str(checker or GUARD), "--root", ".", *args],
             cwd=root,
+            env=env,
             text=True,
             capture_output=True,
         )
