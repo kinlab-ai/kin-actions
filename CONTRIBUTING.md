@@ -40,7 +40,7 @@ select automatic release intent.
 Callers reference workflows like:
 
 ```yaml
-uses: kinlab-ai/kin-actions/.github/workflows/cargo-registry-release.yml@v0.1.37
+uses: kinlab-ai/kin-actions/.github/workflows/cargo-registry-release.yml@v0.1.38
 ```
 
 ## DCO Sign-Off
