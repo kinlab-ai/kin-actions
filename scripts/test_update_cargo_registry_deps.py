@@ -90,7 +90,13 @@ class _RegistryServer:
             def log_message(self, _format, *_args):
                 return
 
-        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        try:
+            self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        except PermissionError as exc:
+            # Binding loopback is refused only inside a sandbox that denies all
+            # networking, such as the export validation stage. Ordinary runs,
+            # including the Script unit tests check, still exercise this test.
+            raise unittest.SkipTest(f"loopback sockets are denied here: {exc}") from exc
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
 
     def __enter__(self):
@@ -257,9 +263,12 @@ class RegistryVersions(unittest.TestCase):
             self.assertEqual(
                 ucd.latest_version("https://kinlab.ai", "kin-model"), "1.0.0"
             )
-        urlopen.assert_called_once_with(
-            "https://kinlab.ai/registry/cargo/ki/n-/kin-model", timeout=10
+        urlopen.assert_called_once()
+        request = urlopen.call_args.args[0]
+        self.assertEqual(
+            request.full_url, "https://kinlab.ai/registry/cargo/ki/n-/kin-model"
         )
+        self.assertEqual(urlopen.call_args.kwargs, {"timeout": 10})
 
     def test_invalid_registry_version_fails_loud(self):
         response = mock.MagicMock()
@@ -291,6 +300,61 @@ class RegistryVersions(unittest.TestCase):
         ):
             with self.assertRaisesRegex(ucd.UpdateError, "does not match"):
                 ucd.latest_version("https://kinlab.ai", "kin-model")
+
+    def _http_error(self, code):
+        return ucd.registry_index.urllib.error.HTTPError(
+            "https://kinlab.ai/registry/cargo/ki/n-/kin-model",
+            code,
+            "error",
+            {},
+            io.BytesIO(b""),
+        )
+
+    def test_registry_5xx_is_retried_with_backoff_then_succeeds(self):
+        response = mock.MagicMock()
+        response.__enter__.return_value.read.return_value = registry_row(version="1.0.0")
+        with mock.patch.object(
+            ucd.registry_index.urllib.request,
+            "urlopen",
+            side_effect=[self._http_error(502), self._http_error(503), response],
+        ) as urlopen, mock.patch.object(ucd.registry_index.time, "sleep") as sleep:
+            self.assertEqual(ucd.latest_version("https://kinlab.ai", "kin-model"), "1.0.0")
+        self.assertEqual(urlopen.call_count, 3)
+        self.assertEqual([c.args[0] for c in sleep.call_args_list], [2, 4])
+
+    def test_registry_5xx_after_every_retry_is_registry_unavailable(self):
+        with mock.patch.object(
+            ucd.registry_index.urllib.request,
+            "urlopen",
+            side_effect=lambda *a, **k: (_ for _ in ()).throw(self._http_error(502)),
+        ) as urlopen, mock.patch.object(ucd.registry_index.time, "sleep") as sleep:
+            with self.assertRaisesRegex(
+                ucd.RegistryUnavailable, "could not read registry index .*HTTP 502 after 4 attempts"
+            ):
+                ucd.latest_version("https://kinlab.ai", "kin-model")
+        self.assertEqual(urlopen.call_count, 4)
+        self.assertEqual([c.args[0] for c in sleep.call_args_list], [2, 4, 8])
+
+    def test_registry_4xx_is_not_retried_and_still_fails_loud(self):
+        with mock.patch.object(
+            ucd.registry_index.urllib.request,
+            "urlopen",
+            side_effect=self._http_error(403),
+        ) as urlopen, mock.patch.object(ucd.registry_index.time, "sleep") as sleep:
+            with self.assertRaises(ucd.UpdateError) as caught:
+                ucd.latest_version("https://kinlab.ai", "kin-model")
+        self.assertNotIsInstance(caught.exception, ucd.RegistryUnavailable)
+        self.assertEqual(urlopen.call_count, 1)
+        sleep.assert_not_called()
+
+    def test_registry_unavailable_cli_exit_is_four(self):
+        with mock.patch.object(
+            ucd,
+            "_resolve_versions",
+            side_effect=ucd.RegistryUnavailable("could not read registry index x: HTTP 502 after 4 attempts"),
+        ), mock.patch("sys.stderr", new_callable=io.StringIO) as stderr:
+            self.assertEqual(ucd.main(["--crate", "kin-model"]), 4)
+        self.assertIn("dependency wave skipped: registry unavailable:", stderr.getvalue())
 
     def test_stale_event_coalesces_to_registry_latest(self):
         with mock.patch.object(
@@ -1144,6 +1208,42 @@ class WorkflowContract(unittest.TestCase):
             if lines[index].strip() == "}"
         )
         return textwrap.dedent("\n".join(lines[start : end + 1]))
+
+    def test_exact_workflow_function_reports_registry_unavailable_as_warning(self):
+        function = self.run_update_function()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            helper = root / ".kin-actions/scripts/update-cargo-registry-deps.py"
+            helper.parent.mkdir(parents=True)
+            helper.write_text(
+                "import sys\n"
+                "print('dependency wave skipped: registry unavailable: HTTP 502 after 4 attempts', file=sys.stderr)\n"
+                "raise SystemExit(4)\n",
+                encoding="utf-8",
+            )
+            summary = root / "summary.md"
+            environment = os.environ.copy()
+            environment["GITHUB_STEP_SUMMARY"] = str(summary)
+            result = subprocess.run(
+                [
+                    "bash",
+                    "-c",
+                    function
+                    + "\nset +e\nrun_update\n"
+                    + 'code=$?\nset -e\nprintf "code=%s\\n" "$code"\n',
+                ],
+                cwd=root,
+                env=environment,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("code=4", result.stdout)
+            self.assertIn("::warning title=Kin registry unavailable::HTTP 502 after 4 attempts", result.stdout)
+            self.assertNotIn("::error", result.stdout)
+            self.assertIn("Kin registry unavailable", summary.read_text(encoding="utf-8"))
 
     def test_exact_workflow_function_propagates_exit_status(self):
         function = self.run_update_function()

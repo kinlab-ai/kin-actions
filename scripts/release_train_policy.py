@@ -157,7 +157,7 @@ def evaluate_train_gate(
     package: str,
     version: str,
     base_version: str | None,
-    published: list[str],
+    published: list[str] | None,
     relevant_paths: list[str],
     changed_paths: list[str],
     generated_paths: list[str],
@@ -172,16 +172,25 @@ def evaluate_train_gate(
     head_branch: str,
     train_branch: str,
 ) -> dict[str, object]:
-    """Evaluate train ownership without relying on mutable PR metadata alone."""
+    """Evaluate train ownership without relying on mutable PR metadata alone.
+
+    ``published`` is ``None`` when the caller did not read the registry because
+    its history could not change the verdict. Any run that still needs that
+    history, because it moves the version, needs a release or holds train
+    authority, fails closed rather than treating the unread registry as empty.
+    """
 
     failures: list[str] = []
+    registry_read = published is not None
+    if published is None:
+        published = []
     current = StableVersion.parse(version)
     if base_version is None:
         failures.append("automatic train requires an established Git base version")
         base = None
     else:
         base = StableVersion.parse(base_version)
-        if str(base) not in published:
+        if registry_read and str(base) not in published:
             failures.append(
                 f"automatic train base {package}@{base} is absent from "
                 "immutable registry history"
@@ -329,17 +338,32 @@ def evaluate_train_gate(
             f"train mode does not grant version authority to event {event_name!r}"
         )
 
+    is_train_pr = trusted_train_pr(
+        event_name=event_name,
+        base_repo=base_repo,
+        head_repo=head_repo,
+        head_branch=head_branch,
+        train_branch=train_branch,
+        labels=labels,
+    )
+    # Mirrors the caller's registry_read_reasons for train mode. Every path that
+    # sets release_needed or release_candidate falls under one of these terms.
+    if not registry_read and (
+        bool(relevant_paths)
+        or base is None
+        or current != base
+        or event_name == "controller"
+        or is_train_pr
+    ):
+        failures.append(
+            f"{package} registry history was not read, but this run depends on it"
+        )
+        release_candidate = False
+
     return {
         "failures": failures,
         "release_needed": release_needed,
         "release_candidate": release_candidate,
         "release_intent": intent,
-        "trusted_train_pr": trusted_train_pr(
-            event_name=event_name,
-            base_repo=base_repo,
-            head_repo=head_repo,
-            head_branch=head_branch,
-            train_branch=train_branch,
-            labels=labels,
-        ),
+        "trusted_train_pr": is_train_pr,
     }

@@ -69,7 +69,13 @@ class _RegistryServer:
             def log_message(self, _format, *_args):
                 return
 
-        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        try:
+            self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        except PermissionError as exc:
+            # Binding loopback is refused only inside a sandbox that denies all
+            # networking, such as the export validation stage. Ordinary runs,
+            # including the Script unit tests check, still exercise this test.
+            raise unittest.SkipTest(f"loopback sockets are denied here: {exc}") from exc
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
 
     def __enter__(self):

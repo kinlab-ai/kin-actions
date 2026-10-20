@@ -4,15 +4,27 @@
 Only an HTTP 404 represents an unpublished crate. Every successful response
 must contain at least one valid Cargo index row; transport, decoding, JSON, and
 schema failures are authority failures rather than an empty registry.
+
+An HTTP 5xx is retried with backoff. If the registry still answers 5xx, the
+fetch raises RegistryUnavailableError (a RegistryIndexError) so a scheduled
+caller can report an outage instead of a broken run. It is never read as
+"unpublished".
+
+Every request names this client in its User-Agent. The edge in front of the
+hosted registry refuses urllib's default ``Python-urllib/x.y`` agent with
+Cloudflare error 1010, which arrives as HTTP 403 and would otherwise fail every
+caller even while the registry is healthy.
 """
 
 from __future__ import annotations
 
 import json
 import re
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable
 
 
@@ -37,6 +49,31 @@ _CHECKSUM = re.compile(r"^[0-9a-fA-F]{64}$")
 
 class RegistryIndexError(RuntimeError):
     """Sparse-index authority could not be established."""
+
+
+class RegistryUnavailableError(RegistryIndexError):
+    """The registry kept answering HTTP 5xx after every retry."""
+
+
+# Delays between attempts on an HTTP 5xx: four attempts, about 14s in all.
+RETRY_DELAYS_SECONDS: tuple[float, ...] = (2, 4, 8)
+
+REPOSITORY_URL = "https://github.com/kinlab-ai/kin-actions"
+
+
+def _helper_version() -> str:
+    """Return the kin-actions VERSION these helper bytes were checked out with."""
+
+    try:
+        version = (
+            Path(__file__).resolve().parent.parent / "VERSION"
+        ).read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeDecodeError):
+        return "unknown"
+    return version if _SEMVER.fullmatch(version) else "unknown"
+
+
+USER_AGENT = f"kin-actions/{_helper_version()} (+{REPOSITORY_URL})"
 
 
 @dataclass(frozen=True)
@@ -207,21 +244,48 @@ def fetch_index(
     *,
     timeout: float = 10,
     opener: Callable[..., object] | None = None,
+    retry_delays: tuple[float, ...] | None = None,
+    sleep: Callable[[float], None] | None = None,
 ) -> tuple[RegistryVersion, ...] | None:
-    """Fetch one strict sparse index, returning ``None`` only for HTTP 404."""
+    """Fetch one strict sparse index, returning ``None`` only for HTTP 404.
+
+    An HTTP 5xx is retried after each delay in ``retry_delays``. If every
+    attempt answers 5xx, RegistryUnavailableError is raised.
+    """
 
     if opener is None:
         opener = urllib.request.urlopen
+    if retry_delays is None:
+        retry_delays = RETRY_DELAYS_SECONDS
+    if sleep is None:
+        sleep = time.sleep
     url = (
         f"{registry_url.rstrip('/')}/registry/cargo/"
         f"{sparse_index_path(crate_name)}"
     )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    attempts = len(retry_delays) + 1
+    attempt = 0
     try:
-        with opener(url, timeout=timeout) as response:
-            body = response.read()
+        while True:
+            attempt += 1
+            try:
+                with opener(request, timeout=timeout) as response:
+                    body = response.read()
+                break
+            except urllib.error.HTTPError as exc:
+                if 500 <= exc.code <= 599 and attempt < attempts:
+                    sleep(retry_delays[attempt - 1])
+                    continue
+                raise
     except urllib.error.HTTPError as exc:
         if exc.code == 404:
             return None
+        if 500 <= exc.code <= 599:
+            raise RegistryUnavailableError(
+                f"could not read registry index {url}: HTTP {exc.code} "
+                f"after {attempts} attempts"
+            ) from exc
         raise RegistryIndexError(
             f"could not read registry index {url}: HTTP {exc.code}"
         ) from exc

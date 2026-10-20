@@ -5,27 +5,26 @@
 Reusable workflows for enforcing version movement, publishing to the Kin cargo
 registry, verifying published crates, and keeping downstream dependency pins in
 sync. Each Kin repository keeps a thin workflow wrapper and pins a semver tag of
-`kin-actions`, so this repo is the central release-enforcement substrate.
+`kin-actions`, so release enforcement lives in this one repository.
 
 This is shared CI and release infrastructure for the Kin ecosystem, not a product
 surface. In the ecosystem manifest (`kin/docs/ecosystem-manifest.json`) it is
 `layer: infrastructure`, `role: shared-ci-and-release-workflows`.
 
 Published versions are listed on the
-[GitHub tags page](https://github.com/firelock-ai/kin-actions/tags).
+[GitHub tags page](https://github.com/kinlab-ai/kin-actions/tags).
 
-[![Part of Kin](https://img.shields.io/badge/part%20of-Kin-6E56CF.svg)](https://github.com/firelock-ai/kin)
+[![Part of Kin](https://img.shields.io/badge/part%20of-Kin-6E56CF.svg)](https://github.com/kinlab-ai/kin)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 ## What is Kin?
 
-Kin is the semantic repo and collaboration substrate: the system of record for
-AI-written software. Your code lives as a graph of entities, relations, and intents,
-not a pile of files and diffs. AI agents and humans navigate it semantically, with
-provenance, review, and governance built in. It coexists with Git and projects graph
-truth back to a normal filesystem, so any tool works unchanged.
+Kin is a graph-native code repository for AI agents and the people who build with
+them. It stores source, recorded code relationships, and versioned history as
+repository state. The graph is the repository model, not a search index maintained
+beside another repository.
 
-Start at **[firelock-ai/kin](https://github.com/firelock-ai/kin)** · **[kinlab.ai](https://kinlab.ai)**
+Start at **[kinlab-ai/kin](https://github.com/kinlab-ai/kin)** · **[kinlab.ai](https://kinlab.ai)**
 
 ## Release contract
 
@@ -79,7 +78,7 @@ when no dispatch credential is configured.
 
 Each Kin repository should keep only a thin workflow wrapper and repo-local config.
 Callers should pin reusable workflows to a semver tag, for example
-`firelock-ai/kin-actions/.github/workflows/cargo-registry-release.yml@v0.1.37`.
+`kinlab-ai/kin-actions/.github/workflows/cargo-registry-release.yml@v0.1.37`.
 
 ## Full-auto Cargo caller
 
@@ -115,7 +114,7 @@ jobs:
       contents: read
       issues: write
       pull-requests: read
-    uses: firelock-ai/kin-actions/.github/workflows/cargo-release-train.yml@vX.Y.Z
+    uses: kinlab-ai/kin-actions/.github/workflows/cargo-release-train.yml@vX.Y.Z
     with:
       package: kin-example
       required-workflow: CI
@@ -129,7 +128,7 @@ jobs:
       actions: write
       contents: read
       issues: write
-    uses: firelock-ai/kin-actions/.github/workflows/cargo-release-recovery.yml@vX.Y.Z
+    uses: kinlab-ai/kin-actions/.github/workflows/cargo-release-recovery.yml@vX.Y.Z
     with:
       package: kin-example
       required-workflow: CI
@@ -143,7 +142,7 @@ automatic tag minting:
 ```yaml
 jobs:
   release:
-    uses: firelock-ai/kin-actions/.github/workflows/cargo-registry-release.yml@vX.Y.Z
+    uses: kinlab-ai/kin-actions/.github/workflows/cargo-registry-release.yml@vX.Y.Z
     with:
       package: kin-example
       version-mode: train
@@ -244,7 +243,7 @@ rollout:
   ```yaml
   jobs:
     hygiene:
-      uses: firelock-ai/kin-actions/.github/workflows/public-history-hygiene.yml@v0.1.37
+      uses: kinlab-ai/kin-actions/.github/workflows/public-history-hygiene.yml@v0.1.37
   ```
 
   The pull request body is scanned along with its title. Where a repository sets `squash_merge_commit_message: PR_BODY`, the merge queue mints the squash commit message from that body with nobody at the merge button, so the body is the commit message. Scanning it on `pull_request` reports a violation where it can still be fixed, rather than letting the merge itself write the reference into public history.
@@ -262,7 +261,7 @@ rollout:
     issues: write
   jobs:
     alarm:
-      uses: firelock-ai/kin-actions/.github/workflows/scheduled-failure-alarm.yml@v0.1.37
+      uses: kinlab-ai/kin-actions/.github/workflows/scheduled-failure-alarm.yml@v0.1.37
   ```
 
   The caller names workflows; the shared workflow decides what counts as a scheduled failure, so a consumer cannot wire a filter that never fires. By default only `schedule` runs are covered, so a manual dispatch neither raises the alarm nor clears it: the alarm tracks whether the schedule is healthy, and one green run a human started does not prove that. Set `alarm-events: schedule,workflow_dispatch` where a repository wants a manual green run to close it. A `cancelled` or `skipped` run proves nothing either way and is left alone, which is deliberate: treating a skipped run as success is how a job that skipped two hundred and three times read as green.

@@ -40,7 +40,7 @@ select automatic release intent.
 Callers reference workflows like:
 
 ```yaml
-uses: firelock-ai/kin-actions/.github/workflows/cargo-registry-release.yml@v0.1.37
+uses: kinlab-ai/kin-actions/.github/workflows/cargo-registry-release.yml@v0.1.37
 ```
 
 ## DCO Sign-Off
@@ -128,7 +128,7 @@ Public Git history is part of the product, so keep it clean and reviewable:
 
 ## Reporting Issues
 
-File issues on [firelock-ai/kin-actions](https://github.com/firelock-ai/kin-actions/issues).
+File issues on [kinlab-ai/kin-actions](https://github.com/kinlab-ai/kin-actions/issues).
 
 For security vulnerabilities, do **not** open a public issue. Follow the
 private reporting process in [SECURITY.md](SECURITY.md).

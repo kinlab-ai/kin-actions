@@ -17,7 +17,7 @@ intent-aware rules so that non-releasing chores stop being blocked:
     branch, whose PRs wear those labels for approval routing rather than
     release intent (see :func:`is_pin_chore_pr`).
 
-It also guards release-authority invariants regardless of the change set:
+It also guards release-authority invariants:
 
   * every version movement must be strictly forward from the Git base under
     full SemVer precedence,
@@ -28,6 +28,11 @@ It also guards release-authority invariants regardless of the change set:
 
 Registry authority fails closed: only a 404 means a crate has no published
 index; transport, decoding, JSON, and malformed-row failures stop the gate.
+The gate classifies the change before it reads the registry, and reads it only
+when registry history can change the verdict (see
+:func:`registry_read_reasons`). A change that keeps the base version and ships
+nothing, such as a CI-only edit, therefore passes while the registry is down,
+and every change that does depend on it still fails closed.
 
 The decision logic lives in :func:`evaluate_gate` and the file classifier in
 :func:`classify_path`; both are pure so they can be unit-tested without git,
@@ -429,11 +434,50 @@ def is_pin_chore_pr(*, event_name, base_repo, head_repo, head_branch, pin_branch
     return True
 
 
+def registry_read_reasons(*, version_mode, version, base_version, relevant,
+                          release_label, pin_chore, event_name,
+                          train_authority):
+    """Return why registry history can change the verdict, or ``[]``.
+
+    Every registry check compares a version this change publishes, or moves
+    to, against immutable history. When the version equals its base, no file
+    is release-affecting, no label forces a bump and the run holds no train
+    authority, those checks could only judge the base commit's own state:
+    nothing here can publish, collide with a published version or fall below
+    one. A push publishes only as a release candidate, which needs a forward
+    version or no base, so version movement covers every push that could
+    release. Train mode gives labels no authority, so they force nothing
+    there.
+    """
+    reasons = []
+    if relevant:
+        reasons.append(f"{len(relevant)} release-affecting file(s) changed")
+    if version_mode == "manual" and release_label and not pin_chore:
+        reasons.append("release label set")
+    if base_version is None:
+        reasons.append("no base version")
+    elif version != base_version:
+        reasons.append(f"version moved from base {base_version} to {version}")
+    if version_mode == "train" and event_name == "controller":
+        reasons.append("release controller run")
+    if version_mode == "train" and train_authority:
+        reasons.append("generated train PR")
+    return reasons
+
+
 def evaluate_gate(*, package, version, base_version, published,
                   source_changes, dep_manifest_changes, release_label,
                   pin_chore=False):
-    """Pure gate decision. Returns ``(failures, require_bump, relevant)``."""
+    """Pure gate decision. Returns ``(failures, require_bump, relevant)``.
+
+    ``published`` is ``None`` when the registry was not read because
+    :func:`registry_read_reasons` found nothing it could change. A decision
+    that still needs registry history then fails closed rather than treating
+    the unread registry as empty.
+    """
     failures = []
+    registry_read = published is not None
+    published = published or []
     version_precedence = parse_version(version)
     newest = max(published, key=parse_version) if published else None
     if newest and version_precedence < parse_version(newest):
@@ -473,6 +517,11 @@ def evaluate_gate(*, package, version, base_version, published,
                 f"{reason} but {package} version stayed at {version}; "
                 "bump major/minor/patch before merging"
             )
+    if not registry_read and (require_bump or release_candidate):
+        failures.append(
+            f"{package} registry history was not read, but this change "
+            "depends on it"
+        )
     return failures, require_bump, relevant
 
 
@@ -558,8 +607,6 @@ def main():
     except (SystemExit, OSError, WorkspaceVersionInherited):
         pass
 
-    published = published_versions(args.registry_url, args.package)
-
     base_ref = select_base_ref(
         args.base_ref,
         os.environ.get("PUSH_BEFORE", ""),
@@ -599,6 +646,33 @@ def main():
     )
 
     relevant = list(source_changes) + list(dep_manifest_changes)
+    train_authority = (
+        args.version_mode == "train"
+        and train_policy.trusted_train_pr(
+            event_name=args.event_name,
+            base_repo=args.base_repo,
+            head_repo=args.head_repo,
+            head_branch=args.head_branch,
+            train_branch=args.train_branch,
+            labels=labels,
+        )
+    )
+    registry_reasons = registry_read_reasons(
+        version_mode=args.version_mode,
+        version=version,
+        base_version=base_version,
+        relevant=relevant,
+        release_label=release_label,
+        pin_chore=pin_chore,
+        event_name=args.event_name,
+        train_authority=train_authority,
+    )
+    if registry_reasons:
+        print("Registry history is required: " + "; ".join(registry_reasons))
+        published = published_versions(args.registry_url, args.package)
+    else:
+        published = None
+
     if args.version_mode == "train":
         result = train_policy.evaluate_train_gate(
             package=args.package,
@@ -660,12 +734,17 @@ def main():
             stream.write(f"release_intent={release_intent}\n")
             stream.write(f"trusted_train_pr={'true' if trusted_train else 'false'}\n")
 
-    newest = max(published, key=parse_version) if published else None
+    if published is None:
+        newest_report = "<not read>"
+    else:
+        newest = max(published, key=parse_version) if published else None
+        newest_report = newest or "<none>"
     print("Kin version gate")
     print(f"  package           : {args.package}")
     print(f"  version mode      : {args.version_mode}")
     print(f"  version           : {version}")
-    print(f"  newest published  : {newest or '<none>'}")
+    print(f"  registry read     : {'yes' if published is not None else 'no'}")
+    print(f"  newest published  : {newest_report}")
     print(f"  base ref          : {base_ref or '<none>'}")
     print(f"  base version      : {base_version or '<unknown>'}")
     print(f"  release label     : {'yes' if release_label else 'no'}")
@@ -693,6 +772,11 @@ def main():
         return 1
     if not require_bump:
         print("OK: no release-affecting changes; version bump not required.")
+        if published is None:
+            print(
+                "  The registry was not read: the version equals base and "
+                "nothing ships, so registry history cannot change this verdict."
+            )
     else:
         print("OK: version is acceptable for the changed files and registry state.")
     return 0

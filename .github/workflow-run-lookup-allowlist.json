@@ -27,9 +27,9 @@
     },
     {
       "file": "scripts/check-workflow-pin-main.py",
-      "reason": "The staged v0.1.34 pin rollout reads the exact landed main SHA's four release jobs immediately before advancing one consumer. This is bounded rollout admission, not durable release evidence, and must be replaced or removed before the exception expires.",
+      "reason": "The scheduled pin wave (scripts/run-workflow-pin-wave.sh) reads the exact landed main SHA's four release jobs immediately before advancing one consumer. This is bounded rollout admission, not durable release evidence. Renewed once after it lapsed on 2026-10-15, because the wave still depends on it; replace it with immutable evidence or remove it before this expiration.",
       "owner": "release-captain",
-      "expiration": "2026-10-15",
+      "expiration": "2026-11-19",
       "allow_match": [
         "f\"repos/{repository}/actions/workflows/{workflow}/runs\",",
         "f\"repos/{repository}/actions/runs/{run_id}/jobs?per_page=100\","
